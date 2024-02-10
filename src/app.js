@@ -4,6 +4,8 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
+//-------------midddleware--------------------------------
+
 app.use( cors({
     origin: process.env.CORS_ORIGIN,
     credentials: true
@@ -20,6 +22,13 @@ app.use(express.urlencoded({
 app.use(express.static("public"))
 
 app.use(cookieParser());
+
+
+//-------------routes--------------------------------
+
+const userRouter = require('./routes/user.route.js')
+
+app.use('/api/v1/users', userRouter)
 
 
 module.exports = app;
