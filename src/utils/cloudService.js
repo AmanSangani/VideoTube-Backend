@@ -1,5 +1,5 @@
-import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
+const { v2: cloudinary } = require("cloudinary");
+const fs = require("fs");
 
 cloudinary.config({
   cloud_name: "amansangani",
