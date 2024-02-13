@@ -11,8 +11,15 @@ const generateAccessAndRefreshToken = async (userId) => {
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
+    // console.log("--------------------------------");
+    // console.log(accessToken, refreshToken);
+    // console.log("--------------------------------");
+
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
+
+    // const rr = await User.findById(userId);
+    // console.log(rr);
 
     return { accessToken, refreshToken };
   } catch (error) {
@@ -94,8 +101,8 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
 
-  if (!username || !password) {
-    throw new ApiError(400, "Username or Password is required");
+  if (!(username || email)) {
+    throw new ApiError(400, "Username or Email is required");
   }
 
   const user = await User.findOne({
@@ -116,9 +123,13 @@ const loginUser = asyncHandler(async (req, res) => {
     user._id
   );
 
-  const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  );
+  // console.log("--------------------------------");
+  // console.log(accessToken, refreshToken);
+  // console.log("--------------------------------");
+
+  const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+
+  // console.log("User logged in", loggedInUser.refreshToken);
 
   const options = {
     httpOnly: true,
