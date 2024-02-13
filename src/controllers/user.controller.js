@@ -3,6 +3,8 @@ const { asyncHandler } = require("../utils/asyncHandler.js");
 const { User } = require("../models/user.model.js");
 const { uploadOnCloud } = require("../utils/cloudService.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
+const jwt = require("jsonwebtoken");
+const { response } = require("../app.js");
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -127,7 +129,9 @@ const loginUser = asyncHandler(async (req, res) => {
   // console.log(accessToken, refreshToken);
   // console.log("--------------------------------");
 
-  const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
 
   // console.log("User logged in", loggedInUser.refreshToken);
 
@@ -179,8 +183,58 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User Logged Out"));
 });
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  try {
+    const incomingRefreshToken =
+      req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (!incomingRefreshToken) {
+      throw new ApiError(404, "UnAuthorised Request -  No Refresh Token");
+    }
+
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+      throw new ApiError(401, "Invalid Refresh Token");
+    }
+
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw new ApiError(401, "Refresh Token Expired");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+      user._id
+    );
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken },
+          "Access Token Refreshed"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(401, error?.message || "Invalid Refresh Token");
+  }
+});
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
+  refreshAccessToken,
 };
