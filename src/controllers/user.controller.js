@@ -4,7 +4,6 @@ const { User } = require("../models/user.model.js");
 const { uploadOnCloud } = require("../utils/cloudService.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const jwt = require("jsonwebtoken");
-const { response } = require("../app.js");
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -231,6 +230,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, error?.message || "Invalid Refresh Token");
   }
 });
+
+
 
 module.exports = {
   registerUser,
