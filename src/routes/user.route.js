@@ -46,11 +46,11 @@ router.route("/update-account-details").patch(verifyJwt, updateAccountDetails);
 
 router
   .route("/update-user-avatar")
-  .patch(verifyJwt, upload.single(avatar), updateUserAvatar);
+  .patch(verifyJwt, upload.single("avatar"), updateUserAvatar);
 
 router
   .route("/update-user-coverImage")
-  .patch(verifyJwt, upload.single(coverImage), updateUserCoverImage);
+  .patch(verifyJwt, upload.single("coverImage"), updateUserCoverImage);
 
 router.route("/c/:username").get(verifyJwt, getUserChannelProfile);
 

@@ -4,8 +4,7 @@ const { User } = require("../models/user.model.js");
 const { uploadOnCloud } = require("../utils/cloudService.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const jwt = require("jsonwebtoken");
-const fs = require("fs");
-const { response } = require("express");
+const mongoose = require("mongoose");
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -166,6 +165,9 @@ const logoutUser = asyncHandler(async (req, res) => {
       $set: {
         refreshToken: undefined,
       },
+      // $unset: {
+      //   refreshToken: 1,
+      // },
     },
     {
       new: true,
@@ -293,19 +295,15 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Avatar Cloud URL not found");
   }
 
-  const user = await user
-    .findByIdAndUpdate(
-      req.user?._id,
-      {
-        $set: {
-          avatar: avatar.url,
-        },
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatar.url,
       },
-      { new: true }
-    )
-    .select("-password -refreshToken");
-
-  fs.unlinkSync(avatarLocalPath);
+    },
+    { new: true }
+  ).select("-password -refreshToken");
 
   return res
     .status(200)
@@ -324,17 +322,15 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Cover Image Cloud URL not found");
   }
 
-  const user = await user
-    .findByIdAndUpdate(
-      req.user?._id,
-      {
-        $set: {
-          coverImage: coverImage.url,
-        },
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: coverImage.url,
       },
-      { new: true }
-    )
-    .select("-password -refreshToken");
+    },
+    { new: true }
+  ).select("-password -refreshToken");
 
   return res
     .status(200)
@@ -351,9 +347,9 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   // User.findOne({username})
 
   //Aggregation Syntax
-  // const channel = await User.aggregate({}, {}, {});
+  // const channel = await User.aggregate([{}, {}, {}]);
 
-  const channel = await User.aggregate(
+  const channel = await User.aggregate([
     //find the user by username
     {
       $match: {
@@ -365,16 +361,16 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       $lookup: {
         from: "subscriptions", //modelname
         localField: "_id",
-        foriegnField: "channel", //based on which we want all documents
+        foreignField: "channel", //based on which we want all documents
         as: "subscribers",
       },
     },
     //find the channel to which user have subscribed based on the subscriber
     {
-      lookup: {
+      $lookup: {
         from: "subscriptions",
         localField: "_id",
-        foriegnField: "subscriber",
+        foreignField: "subscriber",
         as: "subscribedTo",
       },
     },
@@ -391,7 +387,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
           $cond: {
             if: { $in: [req.user?._id, "$subscribers.subscriber"] },
             then: true,
-            false: false,
+            else: false,
           },
         },
       },
@@ -408,8 +404,8 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         coverImage: 1,
         email: 1,
       },
-    }
-  );
+    },
+  ]);
 
   if (!channel?.length) {
     throw new ApiError(404, "Channel does not exist");
@@ -418,7 +414,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   console.log("Channel --> ", channel);
 
   return res
-    .ststus(200)
+    .status(200)
     .json(new ApiResponse(200, channel, "User Channel fetched successfully"));
 });
 
@@ -428,7 +424,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
   but while using aggregation pipeline mongoose doesnot convert and returns 'ObjectId("6r9b98ybc9y238ybr")' as it is, so we have to 
   manually convert it --> "mongoose.Types.ObjectId(req.user._id)"
   */
-  const user = await User.aggregate(
+  const user = await User.aggregate([
     {
       $match: {
         _id: new mongoose.Types.ObjectId(req.user._id),
@@ -436,16 +432,16 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     },
     {
       $lookup: {
-        form: "videos",
+        from: "videos",
         localField: "watchHistory",
-        foriegnField: "_id",
+        foreignField: "_id",
         as: "watchHistory",
         pipeline: [
           {
             $lookup: {
               from: "user",
               localField: "owner",
-              foriegnField: "_id",
+              foreignField: "_id",
               as: "owner",
               pipeline: [
                 {
@@ -467,8 +463,8 @@ const getWatchHistory = asyncHandler(async (req, res) => {
           },
         ],
       },
-    }
-  );
+    },
+  ]);
 
   return res
     .status(200)
