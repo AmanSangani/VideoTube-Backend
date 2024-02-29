@@ -1,7 +1,10 @@
 const { Router } = require("express");
 const { upload } = require("../middlewares/multer.js");
 const { verifyJwt } = require("../middlewares/authMiddleware.js");
-const { publishVideo } = require("../controllers/video.controller.js");
+const {
+  publishVideo,
+  getVideoById,
+} = require("../controllers/video.controller.js");
 
 const router = Router();
 
@@ -20,5 +23,6 @@ router.route("/publishVideo").post(
   publishVideo
 );
 
+router.route("/getVideo/:videoId").get(verifyJwt, getVideoById);
 
-module.exports = router
+module.exports = router;
