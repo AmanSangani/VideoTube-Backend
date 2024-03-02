@@ -1,7 +1,11 @@
 const { ApiError } = require("../utils/ApiError.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { asyncHandler } = require("../utils/asyncHandler.js");
-const { uploadOnCloud, getDetailsOfCloudImage, deleteFileOnCloud } = require("../utils/cloudService.js");
+const {
+  uploadOnCloud,
+  getDetailsOfCloudImage,
+  deleteFileOnCloud,
+} = require("../utils/cloudService.js");
 const fs = require("fs");
 const Video = require("../models/video.model.js");
 const mongoose = require("mongoose");
@@ -148,42 +152,67 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+  const thumbnailLocalPath = req.file?.path;
   const { title, description } = req.body;
 
   console.log("Video Id : " + videoId);
   console.log("title : " + title);
   console.log("description : " + description);
+  console.log("thumbnailLocalPath : " + thumbnailLocalPath);
 
-  const newthumbnailLocalPath = req.file?.path;
-  console.log("New thumbnailLocalPath : " + newthumbnailLocalPath);
+  if (!(title && description && thumbnailLocalPath)) {
+    throw new ApiError(400, "Nothing to update");
+  }
 
-  // if (!videoId.trim() || !isValidObjectId(videoId)) {
-  //   throw new ApiError(400, "Video id is required or invalid !");
-  // }
+  try {
+    const video = await Video.findById(videoId);
 
-  // if (!(title && description && newthumbnailLocalPath)) {
-  //   throw new ApiError(400, "Nothing to update");
-  // }
+    if (!video) {
+      throw new ApiError(404, "Video not found");
+    }
 
-  const oldVideo = await Video.findById(videoId);
-  console.log(oldVideo);
-  // if (oldVideo.owner != req.user._id) {
-  //   throw new ApiError(402, "Unauthorized User");
-  // }
+    if (video.owner.toString() !== req.user._id.toString()) {
+      throw new ApiError(401, "Unauthorized to update this video");
+    }
 
-  const oldthumbnailPath = oldVideo.thumbnail;
-  console.log(oldthumbnailPath);
+    // if (video.title == title) {
+    //   throw new ApiError(400, "Video title already exist");
+    // }
 
-  // const response = await getDetailsOfCloudImage(oldthumbnailPath);
-  const response = await deleteFileOnCloud(oldthumbnailPath);
+    const toBeDeleteThumbnail = video.thumbnail;
+    console.log("toBeDeleteThumbnail : ", toBeDeleteThumbnail);
 
-  const video = await Video.findByIdAndUpdate(videoId, {
-    $set: {
-      title,
-      description,
-      newthumbnailCloudPath,
-    },
-  });
+    const thumbnail = await uploadOnCloud(thumbnailLocalPath);
+    console.log("new thumbnail : ", thumbnail);
+
+    if (!thumbnail) {
+      throw new ApiError(500, "Error while updating thumbnail");
+    }
+
+    video.thumbnail = thumbnail.url;
+    video.title = title;
+    video.description = description;
+
+    const updatedVideo = await video.save();
+
+    if (!updatedVideo) {
+      throw new ApiError(500, "Error while updating video");
+    }
+
+    await deleteFileOnCloud(toBeDeleteThumbnail);
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          updatedVideo,
+          "Video thumbnail updated successfully"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(500, error.message || "Error while updating video");
+  }
 });
 
 module.exports = {

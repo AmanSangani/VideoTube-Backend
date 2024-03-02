@@ -28,6 +28,6 @@ router.route("/getVideo/:videoId").get(verifyJwt, getVideoById);
 
 router
   .route("/updateVideo/:videoId")
-  .post(verifyJwt, upload.fields({ name: "thumbnail" }), updateVideo);
+  .post(verifyJwt, upload.single("thumbnail"), updateVideo);
 
 module.exports = router;

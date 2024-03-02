@@ -1,5 +1,6 @@
 const { v2: cloudinary } = require("cloudinary");
 const fs = require("fs");
+const { ApiError } = require("./ApiError");
 
 cloudinary.config({
   cloud_name: "amansangani",
@@ -26,23 +27,28 @@ const uploadOnCloud = async (localFilePath) => {
   }
 };
 
-const getDetailsOfCloudImage = async (imageUrl) => {
-  console.log("Fetching details for image:", imageUrl);
+const getDetailsOfCloudImage = async (fileURL) => {
+  console.log("Fetching details for image:", fileURL);
   try {
-    const result = await cloudinary.api.resource(imageUrl);
+    const publicIdentifier = fileURL.match(/\/([^\/]+)$/)[1].split(".")[0];
+    const result = await cloudinary.api.resource(publicIdentifier);
     console.log("Image details:", result);
   } catch (error) {
     console.error("Error fetching image details:", error.message || error);
   }
 };
 
-const deleteFileOnCloud = async (filePathToBeDelete) => {
+const deleteFileOnCloud = async (fileURL) => {
   try {
-    if (!filePathToBeDelete) {
+    if (!fileURL) {
       console.log("FilePathToBeDelete is required");
       return null;
     }
-    const responce = await cloudinary.uploader.destroy(filePathToBeDelete);
+    const publicIdentifier = fileURL.match(/\/([^\/]+)$/)[1].split(".")[0];
+    const responce = await cloudinary.uploader.destroy(publicIdentifier);
+    console.warn(responce);
+    console.log("Public Identifier:", publicIdentifier);
+
     console.log(responce);
     return responce;
   } catch (error) {
