@@ -1,7 +1,7 @@
 const { ApiError } = require("../utils/ApiError.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { asyncHandler } = require("../utils/asyncHandler.js");
-const { uploadOnCloud } = require("../utils/cloudService.js");
+const { uploadOnCloud, getDetailsOfCloudImage, deleteFileOnCloud } = require("../utils/cloudService.js");
 const fs = require("fs");
 const Video = require("../models/video.model.js");
 const mongoose = require("mongoose");
@@ -146,7 +146,48 @@ const getVideoById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video, "Video Get Successfully"));
 });
 
+const updateVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const { title, description } = req.body;
+
+  console.log("Video Id : " + videoId);
+  console.log("title : " + title);
+  console.log("description : " + description);
+
+  const newthumbnailLocalPath = req.file?.path;
+  console.log("New thumbnailLocalPath : " + newthumbnailLocalPath);
+
+  // if (!videoId.trim() || !isValidObjectId(videoId)) {
+  //   throw new ApiError(400, "Video id is required or invalid !");
+  // }
+
+  // if (!(title && description && newthumbnailLocalPath)) {
+  //   throw new ApiError(400, "Nothing to update");
+  // }
+
+  const oldVideo = await Video.findById(videoId);
+  console.log(oldVideo);
+  // if (oldVideo.owner != req.user._id) {
+  //   throw new ApiError(402, "Unauthorized User");
+  // }
+
+  const oldthumbnailPath = oldVideo.thumbnail;
+  console.log(oldthumbnailPath);
+
+  // const response = await getDetailsOfCloudImage(oldthumbnailPath);
+  const response = await deleteFileOnCloud(oldthumbnailPath);
+
+  const video = await Video.findByIdAndUpdate(videoId, {
+    $set: {
+      title,
+      description,
+      newthumbnailCloudPath,
+    },
+  });
+});
+
 module.exports = {
   publishVideo,
   getVideoById,
+  updateVideo,
 };
