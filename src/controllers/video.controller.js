@@ -8,6 +8,8 @@ const {
 } = require("../utils/cloudService.js");
 const fs = require("fs");
 const Video = require("../models/video.model.js");
+const Like = require("../models/like.model.js");
+const Comment = require("../models/comment.model.js");
 const mongoose = require("mongoose");
 
 const publishVideo = asyncHandler(async (req, res) => {
@@ -215,8 +217,57 @@ const updateVideo = asyncHandler(async (req, res) => {
   }
 });
 
+const deleteVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId) {
+    throw new ApiError(404, "Invalid Video Id");
+  }
+
+  const video = await Video.findById(videoId);
+  console.log("Video : ", video);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (video.owner.toString() != req.user._id.toString()) {
+    throw new ApiError(404, "Unauthorized User");
+  }
+
+  videoUrl = video.videoFile;
+  thumbnailUrl = video.thumbnail;
+  console.log("videoUrl : ", videoUrl);
+  console.log("thumbnailUrl : ", thumbnailUrl);
+
+  const deleteVideoResponse = await deleteFileOnCloud(videoUrl);
+  const deleteThumbnailResponse = await deleteFileOnCloud(thumbnailUrl);
+
+  if (!(deleteVideoResponse || deleteThumbnailResponse)) {
+    throw new ApiError(400, "Error while deleting file on cloud");
+  }
+
+  const deleteVideoFromDB = await Video.findByIdAndDelete(videoId);
+  console.log("deleteVideoFromDB : ", deleteVideoFromDB);
+
+  const likeDelete = await Like.deleteMany({ video: videoId });
+
+  const commentDelete = await Comment.deleteMany({ video: videoId });
+
+  if (!(deleteVideoFromDB || likeDelete || commentDelete)) {
+    throw new ApiError(400, "Error while deleting video");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(201, deleteVideoFromDB, "Video deleted successfully")
+    );
+});
+
 module.exports = {
   publishVideo,
   getVideoById,
   updateVideo,
+  deleteVideo,
 };

@@ -5,6 +5,7 @@ const {
   publishVideo,
   getVideoById,
   updateVideo,
+  deleteVideo,
 } = require("../controllers/video.controller.js");
 
 const router = Router();
@@ -29,5 +30,7 @@ router.route("/getVideo/:videoId").get(verifyJwt, getVideoById);
 router
   .route("/updateVideo/:videoId")
   .post(verifyJwt, upload.single("thumbnail"), updateVideo);
+
+router.route("/deleteVideo/:videoId").post(verifyJwt, deleteVideo);
 
 module.exports = router;
