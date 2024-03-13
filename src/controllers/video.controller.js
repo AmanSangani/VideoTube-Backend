@@ -12,6 +12,10 @@ const Like = require("../models/like.model.js");
 const Comment = require("../models/comment.model.js");
 const mongoose = require("mongoose");
 
+const getAllVideos = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+});
+
 const publishVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
 
@@ -265,9 +269,30 @@ const deleteVideo = asyncHandler(async (req, res) => {
     );
 });
 
+const togglePublishStatus = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  if (!videoId) {
+    throw new ApiError(400, "video id is required or invalid !");
+  }
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new ApiError(404, "video not found !");
+  }
+
+  if (video.owner.toString() != (req.user?._id).toString()) {
+    throw new ApiError(401, "Unauthorised user!");
+  }
+
+  video.isPublished = !video.isPublished;
+  await video.save();
+
+  return res.status(200).json(new ApiResponse(200, "toggled state of publish"));
+});
+
 module.exports = {
   publishVideo,
   getVideoById,
   updateVideo,
   deleteVideo,
+  togglePublishStatus,
 };
