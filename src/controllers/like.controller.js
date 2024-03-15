@@ -22,30 +22,28 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         video: videoId,
         likedBy: req.user?._id,
     });
+    console.log("Already liked : " + alreadyLiked);
 
-    if (alreadyLiked != null) {
-        const deleteLike = await Like.findByIdAndDelete(alreadyLiked[0]._id);
-        if (!deleteLike) {
-            return new ApiError(
-                500,
-                "Like Not Deleted | Internal Serever Error",
-            );
+    if (alreadyLiked.length == 0) {
+        const like = await Like.create({
+            video: new mongoose.Types.ObjectId(videoId),
+            likedBy: new mongoose.Types.ObjectId(req.user?._id),
+        });
+
+        if (!like) {
+            throw new ApiError(500, "Like Not Done | Internal Server Error");
         }
-        return res
-            .status(200)
-            .json(new ApiResponse(200, deleteLike, "Like Deleted"));
+
+        return res.status(200).json(new ApiResponse(200, like, "Like Done"));
     }
 
-    const like = await Like.create({
-        video: new mongoose.Types.ObjectId(videoId),
-        likedBy: new mongoose.Types.ObjectId(req.user?._id),
-    });
-
-    if (!like) {
-        throw new ApiError(500, "Like Not Done | Internal Server Error");
+    const deleteLike = await Like.findByIdAndDelete(alreadyLiked[0]._id);
+    if (!deleteLike) {
+        return new ApiError(500, "Like Not Deleted | Internal Serever Error");
     }
-
-    return res.status(200).json(new ApiResponse(200, like, "Like Done"));
+    return res
+        .status(200)
+        .json(new ApiResponse(200, deleteLike, "Like Deleted"));
 });
 
 module.exports = {
