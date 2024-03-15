@@ -4,6 +4,6 @@ const { verifyJwt } = require("../middlewares/authMiddleware.js");
 
 const router = Router();
 
-router.route("/likeVideo/:videoId", verifyJwt, toggleVideoLike);
+router.route("/likeVideo/:videoId").post(verifyJwt, toggleVideoLike);
 
 module.exports = router;
