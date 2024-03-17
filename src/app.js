@@ -31,9 +31,11 @@ app.use(cookieParser());
 const userRouter = require("./routes/user.route.js");
 const videoRouter = require("./routes/video.route.js");
 const likeRouter = require("./routes/like.route.js");
+const commentRouter = require("./routes/comment.route.js");
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/video", videoRouter);
 app.use("/api/v1/like", likeRouter);
+app.use("/api/v1/comment", commentRouter);
 
 module.exports = app;
