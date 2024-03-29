@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const { Like } = require("../models/like.model.js");
+const { Comment } = require("../models/comment.model.js");
 const { Video } = require("../models/video.model.js");
 const { ApiError } = require("../utils/ApiError.js");
 const { asyncHandler } = require("../utils/asyncHandler.js");
@@ -82,7 +83,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         throw new ApiError(400, "tweet id is required or invalid");
     }
 
-    const tweet = await Tweet.findById(tweetId);
+    const tweet = await Comment.findById(tweetId);
     if (!tweet) {
         throw new ApiError(404, "tweet not found!");
     }

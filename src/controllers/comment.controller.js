@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const { Video } = require("../models/video.model");
+const { Comment } = require("../models/comment.model");
 const { ApiError } = require("../utils/ApiError");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { ApiResponse } = require("../utils/ApiResponse");
