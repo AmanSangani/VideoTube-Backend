@@ -132,7 +132,7 @@ const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
-  // console.log("User logged in", loggedInUser.refreshToken);
+  console.log("User logged in : ", loggedInUser._id, " : username --> ", loggedInUser.username);
 
   const options = {
     httpOnly: true,
