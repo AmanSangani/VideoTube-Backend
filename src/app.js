@@ -28,6 +28,8 @@ app.use(cookieParser());
 
 //-------------routes--------------------------------
 
+app.get("/", (req,res) => {res.status(200).send("Code Running")})
+
 const userRouter = require("./routes/user.route.js");
 const videoRouter = require("./routes/video.route.js");
 const likeRouter = require("./routes/like.route.js");
