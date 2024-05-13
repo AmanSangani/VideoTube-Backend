@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose");
 const { Video } = require("../models/video.model");
 const { Comment } = require("../models/comment.model");
+const { Like } = require("../models/like.model");
 const { ApiError } = require("../utils/ApiError");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { ApiResponse } = require("../utils/ApiResponse");
@@ -49,7 +50,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
   page = isNaN(page) ? 1 : Number(page);
   limit = isNaN(page) ? 10 : Number(limit);
 
-  if (!videoId?.trim() || !isValidObjectId(videoId)) {
+  if (!videoId?.trim()) {
     throw new ApiError(400, "video id is required or valid");
   }
 
@@ -128,7 +129,7 @@ const updateComment = asyncHandler(async (req, res) => {
     if (!content) {
       throw new ApiError(400, "content required!");
     }
-    if(!commentId.trim() || !isValidObjectId(commentId)){
+    if(!commentId.trim()){
       throw new ApiError(400,"comment id is required or invalid!")
     }
 
@@ -166,7 +167,7 @@ const updateComment = asyncHandler(async (req, res) => {
 const deleteComment = asyncHandler(async (req, res) => {
     // TODO: delete a comment
     const { commentId } = req.params;
-    if(!commentId.trim() || !isValidObjectId(commentId)){
+    if(!commentId.trim()){
       throw new ApiError(400,"comment id is required or invalid!")
     }
 
