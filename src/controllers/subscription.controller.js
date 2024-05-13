@@ -1,7 +1,14 @@
+const { default: mongoose } = require("mongoose");
+const { ApiError } = require("../utils/ApiError.js");
+const { User } = require("../models/user.model.js");
+const { Subscription } = require("../models/subscription.model.js");
+const { asyncHandler } = require("../utils/asyncHandler.js");
+const { ApiResponse } = require("../utils/ApiResponse.js");
+
 const toggleSubscription = asyncHandler(async (req, res) => {
     // TODO: toggle subscription
     const { channelId } = req.params;
-    if (!channelId.trim() || !isValidObjectId(channelId)) {
+    if (!channelId.trim()) {
         throw new ApiError(400, "channelid is required or invalid!");
     }
     const channel = await User.findById(channelId);
@@ -14,6 +21,10 @@ const toggleSubscription = asyncHandler(async (req, res) => {
         subscriber: new mongoose.Types.ObjectId(req.user?._id),
         channel: new mongoose.Types.ObjectId(channelId),
     });
+
+    if (req.user?._id == channelId) {
+        throw new ApiError(400, "owner of channel cannot subscribe")
+    }
 
     if (isAlredySubscribed.length == 0) {
         const subscibedDoc = await Subscription.create({
@@ -36,7 +47,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 // controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     const { channelId } = req.params;
-    if (!channelId.trim() || !isValidObjectId(channelId)) {
+    if (!channelId.trim()) {
         throw new ApiError(400, "channelid is requierd or invalid");
     }
 
@@ -100,7 +111,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 // controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
     const { channelId } = req.params;
-    if (!channelId.trim() || !isValidObjectId(channelId)) {
+    if (!channelId.trim()) {
         throw new ApiError(400, "channle id is required or invalid!");
     }
 
@@ -153,7 +164,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     ]);
 
     if (subscribedToChannel.length == 0) {
-        throw new ApiError(404, "No subscriber found");
+        throw new ApiError(404, "No channel that are subscribed found");
     }
 
     return res
@@ -162,7 +173,13 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 subscribedToChannel,
-                "fetched subscirber successfully!",
+                "fetched channels that are subscribed successfully!",
             ),
         );
 });
+
+module.exports = {
+    toggleSubscription,
+    getUserChannelSubscribers,
+    getSubscribedChannels,
+};
