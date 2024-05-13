@@ -34,6 +34,7 @@ const likeRouter = require("./routes/like.route.js");
 const commentRouter = require("./routes/comment.route.js");
 const playlistRouter = require("./routes/playlist.route.js");
 const subscriptionRouter = require("./routes/subscription.route.js");
+const healthCheckRouter = require("./routes/healthcheck.route.js");
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/video", videoRouter);
@@ -41,5 +42,6 @@ app.use("/api/v1/like", likeRouter);
 app.use("/api/v1/comment", commentRouter);
 app.use("/api/v1/playlist", playlistRouter);
 app.use("/api/v1/subscription", subscriptionRouter);
+app.use("/api/v1/healthCheck", healthCheckRouter);
 
 module.exports = app;
